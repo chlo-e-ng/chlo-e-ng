@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #E5E7EB; /* gray-200 */
+        }
+        /* Custom transition for smooth tab switching */
+        .tab-content {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .tab-content.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            position: absolute;
+            pointer-events: none;
+        }
+        /* Active nav link style */
+        .nav-link.active {
+            color: white;
+            position: relative;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background-color: #69CBDF;
+            border-radius: 50%;
+        }
+        /* Project card base styles */
+        .project-card {
+            aspect-ratio: 16 / 9;
+        }
+       
+        /* Resume timeline styling */
+        .timeline-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .timeline-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(105, 203, 223, 0.1), 0 4px 6px -2px rgba(105, 203, 223, 0.05);
+        }
+        
+        /* Scroll & Load Animation */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Loading Spinner for Gemini API Call */
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #69CBDF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Header Scroll Effect */
+        #main-header {
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        #main-header.scrolled {
+            background-color: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(8px);
+            --tw-shadow-color: #69CBDF;
+            --tw-shadow: 0 4px 6px -1px rgba(105, 203, 223, 0.07), 0 2px 4px -2px rgba(105, 203, 223, 0.04);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+        }
+        
+        /* Gradient Text for Hero Headline */
+        .gradient-text {
+            background: linear-gradient(90deg, #FFFFFF, #69CBDF);
+            -webkit-background-clip: text;
+            -moz-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            -moz-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header id="main-header" class="fixed top-0 left-0 right-0 z-40">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex justify-between items-center h-20">
+                <div>
+                    <a href="#" class="text-xl font-bold text-white transition-colors hover:text-gray-300">Chloe Ng</a>
+                </div>
+                <ul class="hidden md:flex items-center space-x-8 sm:space-x-12">
+                    <li><a href="#" class="nav-link uppercase tracking-wider text-sm font-medium text-gray-400 hover:text-[#69CBDF] transition-colors duration-300 active" data-tab="hello">Hello</a></li>
+                    <li><a href="#" class="nav-link uppercase tracking-wider text-sm font-medium text-gray-400 hover:text-[#69CBDF] transition-colors duration-300" data-tab="work">Work</a></li>
+                    <li><a href="#" class="nav-link uppercase tracking-wider text-sm font-medium text-gray-400 hover:text-[#69CBDF] transition-colors duration-300" data-tab="resume">Resume</a></li>
+                    <li><a href="#" class="nav-link uppercase tracking-wider text-sm font-medium text-gray-400 hover:text-[#69CBDF] transition-colors duration-300" data-tab="contact">Contact</a></li>
+                </ul>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </nav>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-[#0A0A0A]/95 backdrop-blur-lg absolute top-0 left-0 w-full h-screen">
+             <div class="flex justify-end p-4">
+                 <button id="close-mobile-menu-button" class="text-white">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <ul class="flex flex-col items-center justify-center h-full space-y-8 -mt-16">
+                <li><a href="#" class="nav-link text-2xl font-semibold text-gray-300 active" data-tab="hello">Hello</a></li>
+                <li><a href="#" class="nav-link text-2xl font-semibold text-gray-300" data-tab="work">Work</a></li>
+                <li><a href="#" class="nav-link text-2xl font-semibold text-gray-300" data-tab="resume">Resume</a></li>
+                <li><a href="#" class="nav-link text-2xl font-semibold text-gray-300" data-tab="contact">Contact</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow pt-20 container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative">
+            <!-- Hello Section -->
+            <section id="hello" class="tab-content">
+                <!-- Full-width responsive image -->
+                <div class="w-full h-[50vh] md:h-[60vh] mt-8 scroll-animate">
+                    <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=2020&auto=format&fit=crop" 
+                         alt="Abstract modern background of interconnected lights" 
+                         class="w-full h-full object-cover rounded-lg shadow-2xl shadow-[#69CBDF]/20">
+                </div>
+                
+                <!-- Text content and buttons -->
+                <div class="max-w-3xl mx-auto text-center py-16">
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight scroll-animate gradient-text" style="transition-delay: 100ms;">Designing Systems. Building Futures.</h1>
+                    <p class="mt-6 text-lg sm:text-xl text-gray-300 scroll-animate" style="transition-delay: 250ms;">
+                        I'm an experienced user researcher leading mixed-method research across complex, zero-to-one domains like developer tooling, B2B SaaS, and consumer tech. With previous experience at Meta Reality Labs and Google Android, I thrive on tackling ambiguous problems. Based in London, I work with teams globally across all timezones.
+                    </p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 scroll-animate" style="transition-delay: 400ms;">
+                        <a href="#" id="view-work-btn" class="inline-block w-full sm:w-auto bg-[#69CBDF] text-black font-medium px-8 py-3 rounded-lg hover:bg-[#5ab6ce] transition-all duration-300 transform hover:scale-105">
+                            View my work
+                        </a>
+                        <a href="#" id="get-in-touch-btn" class="inline-block w-full sm:w-auto border border-gray-700 text-gray-300 font-medium px-8 py-3 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-300 transform hover:scale-105">
+                            Get in touch
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Work Section -->
+            <section id="work" class="tab-content hidden py-16">
+                 <div id="work-grid" class="space-y-8">
+                    <!-- Projects will be dynamically inserted here -->
+                </div>
+            </section>
+            
+            <!-- Project Detail Page -->
+            <section id="project-detail" class="tab-content hidden py-16">
+                <!-- Content will be injected here -->
+            </section>
+
+            <!-- Resume Section -->
+            <section id="resume" class="tab-content hidden py-16">
+                <div class="max-w-4xl mx-auto">
+                    <!-- How I work Section -->
+                    <div class="mb-16">
+                        <h2 class="text-3xl font-bold text-white mb-6 scroll-animate">How I work</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="space-y-4 text-lg text-gray-300 md:col-span-2">
+                                 <p class="scroll-animate" style="transition-delay: 150ms;">It's all about digging deep to truly understand our customers – their needs, their everyday struggles, and what makes them tick. I then take those insights and turn them into clear guidance that helps our teams build products that are not just impactful, but genuinely user-centered.</p>
+                                 <p class="scroll-animate" style="transition-delay: 300ms;">I love leading user research projects from start to finish. That means everything from figuring out the right questions to ask and the best ways to get answers, to making sense of all our findings and sharing recommendations that really hit home. I team up closely with product managers, designers, engineers, marketers, and business strategists, making sure that user-centered thinking is woven into every stage of how we build products.</p>
+                                 <p class="scroll-animate" style="transition-delay: 450ms;">I adeptly deploy a diverse toolkit of methods, including foundational and tactical approaches such as user interviews, usability testing, concept testing, surveys, contextual inquiries, and diary studies. I enjoy developing new research methods for specific projects, using the latest technology to yield rich and valid findings at pace.</p>
+                                 <p class="scroll-animate" style="transition-delay: 600ms;">Ultimately, my biggest strength is taking those sometimes complex research findings and transforming them into clear, engaging stories. These stories then directly shape our product strategy, design choices, and what features we prioritize, making sure we're always building what truly matters to users.</p>
+                            </div>
+                            <div><!-- This is the empty second column --></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Experience -->
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-12 scroll-animate">Professional Experience</h2>
+                        <div class="relative border-l-2 border-gray-700 ml-4">
+                           
+                            <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 150ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">Senior UX Researcher, Android</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Google</h4>
+                                    <p class="text-sm text-gray-400 mb-4">May 2022 - Present · London, England</p>
+                                    <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Leading foundational research to inform future Android strategy and product development.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                           
+                             <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 300ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">UX Researcher, Metaverse (Contract)</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Meta Reality Labs</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Aug 2021 - Apr 2022 · London, England</p>
+                                    <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Led research on developer experience for AR/VR creation tools.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                             <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 450ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">Senior UX Researcher</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">MVF</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Feb 2021 - Aug 2021 · London, England</p>
+                                    <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                       <li>Led user research for a portfolio of B2B publishing websites.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                             <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 600ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">UX Researcher (Contract)</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Hong Kong University of Science and Technology</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Dec 2020 - Feb 2021 · Hong Kong SAR</p>
+                                    <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Conducted research for a real-time clinical data dashboard in ICUs.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 750ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">UX Researcher</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Kano Computing</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Oct 2019 - Aug 2020 · London, England</p>
+                                     <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Researched and designed creative coding experiences for kids.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 900ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">User Researcher</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Vinehealth</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Mar 2019 - Sep 2019 · London, England</p>
+                                     <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Contributed to the development of an app to support cancer patients.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-12 ml-10 scroll-animate" style="transition-delay: 1050ms;">
+                                <span class="absolute -left-[27px] top-1 flex items-center justify-center w-4 h-4 bg-gray-600 rounded-full ring-4 ring-black"></span>
+                                <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-xl font-semibold text-white">UX Research Intern</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Cisco</h4>
+                                    <p class="text-sm text-gray-400 mb-4">Jun 2018 - Aug 2018 · San Jose, California</p>
+                                     <ul class="list-disc list-outside pl-5 text-gray-300 space-y-2">
+                                        <li>Conducted usability testing for enterprise networking software.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                    <!-- Education -->
+                    <div class="mt-20">
+                         <h2 class="text-3xl font-bold text-white mb-12 scroll-animate">Education</h2>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                             <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800 flex flex-col scroll-animate" style="transition-delay: 150ms;">
+                                <div class="flex-grow">
+                                    <h3 class="text-xl font-semibold text-white">MSc in Human-Computer Interaction</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">University College London</h4>
+                                    <p class="text-base text-gray-300">London 🇬🇧</p>
+                                </div>
+                            </div>
+                             <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800 flex flex-col scroll-animate" style="transition-delay: 300ms;">
+                                <div class="flex-grow">
+                                    <h3 class="text-xl font-semibold text-white">BBA in Management Information System with Statistic Minor</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">CUHK Business School</h4>
+                                    <p class="text-base text-gray-300">Hong Kong 🇭🇰</p>
+                                </div>
+                            </div>
+                            <div class="timeline-card bg-gray-900/50 p-6 rounded-lg border border-gray-800 flex flex-col scroll-animate" style="transition-delay: 450ms;">
+                                <div class="flex-grow">
+                                    <h3 class="text-xl font-semibold text-white">International Business</h3>
+                                    <h4 class="text-lg font-medium text-[#69CBDF] mb-1">Darla Moore School of Business</h4>
+                                    <p class="text-base text-gray-300">Columbia, SC 🇺🇸</p>
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Others -->
+                    <!--
+                    <div class="mt-20">
+                        <h2 class="text-3xl font-bold text-white mb-8 scroll-animate">Skills & Interests</h2>
+                        <div class="flex flex-wrap gap-4 scroll-animate" style="transition-delay: 150ms;">
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Product Strategy</span>
+                             <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">UX/UI Design</span>
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Market Research</span>
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Figma</span>
+                             <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Systems Thinking</span>
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Data Analysis</span>
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Photography</span>
+                            <span class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full">Minimalist Architecture</span>
+                        </div>
+                    </div>
+                    -->
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="tab-content hidden py-16">
+                 <div class="max-w-xl mx-auto text-center">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white scroll-animate">Let's Connect</h2>
+                    <p class="mt-4 text-lg text-gray-300 scroll-animate" style="transition-delay: 150ms;">
+                        I'm always open to discussing new projects, creative ideas, or opportunities to be part of an ambitious vision.
+                    </p>
+                    <p class="mt-4 text-lg text-gray-300 mb-10 scroll-animate" style="transition-delay: 300ms;">
+                        Have a project in mind or just want to say hi? Fill out the form below and I'll get back to you.
+                    </p>
+
+                    <!-- Contact Form -->
+                    <form id="contact-form" action="https://formspree.io/f/xvgrqkqd" method="POST" class="text-left space-y-6 scroll-animate" style="transition-delay: 450ms;">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                            <input type="text" name="name" id="name" required class="block w-full bg-gray-900/50 border border-gray-700 rounded-md shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#69CBDF] focus:border-[#69CBDF] transition-colors">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                            <input type="email" name="email" id="email" required class="block w-full bg-gray-900/50 border border-gray-700 rounded-md shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#69CBDF] focus:border-[#69CBDF] transition-colors">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-300 mb-1">Message</label>
+                            <textarea id="message" name="message" rows="4" required class="block w-full bg-gray-900/50 border border-gray-700 rounded-md shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#69CBDF] focus:border-[#69CBDF] transition-colors"></textarea>
+                        </div>
+                        <div class="text-center pt-4">
+                             <button type="submit" class="inline-block w-full sm:w-auto bg-[#69CBDF] text-black font-medium px-8 py-3 rounded-lg hover:bg-[#5ab6ce] transition-all duration-300 transform hover:scale-105">
+                                Submit
+                            </button>
+                        </div>
+                         <div id="form-status" class="text-center mt-4"></div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="container mx-auto px-4 sm:px-6 lg:px-8 mt-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-center py-8 border-t border-gray-800 space-y-4 sm:space-y-0">
+             <!-- Left side with icons -->
+            <div class="flex items-center space-x-5">
+                <a href="https://www.linkedin.com/in/chloexng/" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-[#69CBDF] transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                </a>
+                <a href="https://github.com/chlo-e-ng" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-[#69CBDF] transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+                <a href="https://x.com/chlo_e_ng" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-[#69CBDF] transition-colors">
+                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231L18.244 2.25zM17.5 19.5h1.5l-8.25-10.875h-1.6L17.5 19.5z"/>
+                    </svg>
+                </a>
+            </div>
+            <!-- Right side with text -->
+            <p class="text-gray-500 text-sm">&copy; 2025 Chloe Ng. All rights reserved.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DATA ---
+            const projects = [
+                 {
+                    id: 1,
+                    title: 'Optimizing Supply Chain Strategy Through Simulation',
+                    description: 'Empowering retail supply chain managers to optimize complex logistics strategies through a powerful simulation platform.',
+                    image: 'https://images.unsplash.com/photo-1578575437130-5278e6914c45?q=80&w=2070&auto=format&fit=crop',
+                    challenge: 'Retail supply chain teams face immense pressure to optimize complex logistics while often relying on fragmented data and intuition. My team aimed to develop a data science-powered simulation platform to enable data-driven decision-making, requiring a deep understanding of user needs and existing tools to ensure relevance and usability.',
+                    actions: 'I utilized competitor analysis, existing survey data, and business user interviews to gain a thorough understanding of strategic decision-making processes, identifying critical gaps and unmet needs in current tools.',
+                    outcomes: "My research clarified critical shortcomings and opportunities, directly shaping the platform's strategic development. Findings highlighted the imperative for intuitive scenario-based planning, fostering trust in model outputs, and enabling clear strategic option comparison.",
+                    hasPlaceholders: true
+                },
+                {
+                    id: 2,
+                    title: 'Meta Spark Developer Education Strategy',
+                    description: 'A foundational research to establish a strategic developer education framework for a zero-to-one product, accelerating adoption and enhancing user satisfaction.',
+                    image: 'https://i.imgur.com/8aM3bV7.jpeg',
+                    challenge: "I joined a new team during a significant company pivot to an unfamiliar user group, lacking prior research on their educational needs. This presented a unique opportunity to define a new strategic direction and validate the true necessity of potential educational solutions, such as a large-scale learning site.",
+                    actions: "As the UXR, I launched a series of research efforts including exploratory interviews, focus groups, and extensive secondary research to understand the existing education ecosystem and user needs from different angles. This comprehensive approach helped identify genuine learning gaps and how creators truly learn, rather than simply validating a pre-conceived solution. I aligned these user-centered insights with XFN partners to inform our strategy.",
+                    outcomes: "My research not only shaped our team's strategy and roadmap but also led to the creation of an actionable framework for our developer education strategy. XFN partners gained crucial clarity, using findings to challenge new ideas and prevent investment in unneeded features, including a 'no-go' on certain paths. We identified key tracking metrics in collaboration with data science, resulting in increased helpfulness scoring in customer surveys and informing broader developer education efforts.",
+                    hasPlaceholders: false
+                },
+                {
+                    id: 3,
+                    title: 'Real-time Clinical Data Dashboard at the Intensive Care Unit',
+                    description: 'Accelerating critical care decisions: In-depth qualitative inquiry optimizing a real-time patient data dashboard for enhanced clinical insights and improved patient outcomes.',
+                    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop',
+                    challenge: "In critical care environments, timely access to vital signs is crucial, yet existing dashboard prototypes struggled with seamless integration into demanding clinical workflows. The core challenge was to validate the prototype's effectiveness in supporting decision-making while mitigating usability issues, workflow disruptions, and potential risks like compromised data privacy or negative team culture.",
+                    actions: "Leading qualitative fieldwork, I conducted field visits, semi-structured interviews, and observations with junior doctors and ICU administrative staff to evaluate the dashboard prototype within their demanding clinical workflows for the Health Informatics Team. This multi-method approach, followed by thematic analysis, allowed for a deep dives into user mental models, critical pain points, and existing information retrieval processes.",
+                    outcomes: "The research provided critical insights, directly informing the dashboard's evolution and aligning its design with complex clinical workflows. Key findings included identified target metrics, UI usability issues (e.g., navigation, color coding), and crucial potential risks such as blame culture and data safety concerns, leading to actionable design and implementation recommendations. These insights were highly valued by the multi-disciplinary Health Informatics team, directly shaping the next iteration for enhanced user trust and improved patient care.",
+                    hasPlaceholders: true
+                },
+                 {
+                    id: 4,
+                    title: 'User Experience of Robotic Devices for Post-Stroke Hand Rehabilitation',
+                    description: 'Mixed-method research on user perceptions shaping patient-centered design for robotic hand rehabilitation.',
+                    image: 'https://i.imgur.com/L12sE0F.jpeg',
+                    challenge: "The emergence of home-based robotics offers a promising complement to traditional post-stroke rehabilitation, providing patients with convenient, frequent exercise opportunities. However, the effectiveness of these devices hinges significantly on patient motivation and sustained engagement. Despite this, there was a critical gap in research concerning patients' and caregivers' subjective experiences with robot-assisted rehabilitation, which this project aimed to address to inform more patient-centered design.",
+                    actions: "I designed and executed a preliminary mixed-method study to elicit comprehensive user perceptions of a post-stroke hand rehabilitation device. My approach combined quantitative measures via established questionnaires (CEQ and IMI) with in-depth semi-structured interviews involving primary users (patients), secondary users (caregivers), and design experts. This rigorous process, including adaptive recruitment strategies, allowed for a nuanced understanding of subjective experiences and differing stakeholder priorities.",
+                    outcomes: "The research revealed a crucial dichotomy: while patients and caregivers considered the device credible with high expectations for improvement, domain experts held contrasting views, often linked to their prior experiences. Key qualitative themes emerged, highlighting perceived efficacy, desired integration with daily activities, and critical feedback on the device's mechanism and appearance. This study underscored the indispensable value of incorporating subjective user evaluations in rehabilitation technology design, directly informing future device iterations and contributing a vital reference point to the field. The work was accepted and published by the ACM SIGACCESS Conference on Computers and Accessibility in 2019.",
+                    hasPlaceholders: true
+                },
+                {
+                    id: 5,
+                    title: 'Google Pixel Digital Wellbeing',
+                    description: 'Unlocking personalized focus: a multi-method research to guide team in streamlining device states, ensuring essential alerts cut through the noise.',
+                    image: 'https://i.imgur.com/3Yn2nJq.jpeg',
+                    challenge: 'Empowering users with tailored modes that enable intelligent notification filtering and require minimal setup are crucial for helping them focus on daily activities. However, existing capabilities often face low adoption due to perceived complexity. This project aimed to address this by proposing a new set of modes that centralize entry points and simplify customization and invocation, making essential functions easily understandable and accessible.',
+                    actions: 'To yield both foundational and tactical insights that informed the direction of the function, I led a multi-method research initiative. This involved concept testing to gauge initial reactions, semi-structured interviews to understand core user needs and contexts, and usability testing to evaluate intuitiveness across the full mode lifecycle, from initial setup to toggling modes in Quick Settings.',
+                    outcomes: 'The research successfully identified critical usability issues and provided deep insights into user expectations, directly informing design iterations for the new Modes function. Findings led to a streamlined setup process, clearer articulation of mode benefits within the UI, and an optimized Quick Settings experience for mode activation and deactivation. This work provided an actionable blueprint for enhancing mode discoverability and usage, contributing to increased user satisfaction and a path towards higher adoption of tailored contextual experiences.',
+                    hasPlaceholders: false
+                }
+            ];
+
+            // --- DOM ELEMENTS ---
+            const navLinks = document.querySelectorAll('.nav-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const workGrid = document.getElementById('work-grid');
+            const projectDetailSection = document.getElementById('project-detail');
+            const viewWorkBtn = document.getElementById('view-work-btn');
+            const getInTouchBtn = document.getElementById('get-in-touch-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const closeMobileMenuButton = document.getElementById('close-mobile-menu-button');
+
+
+            // --- FUNCTIONS ---
+            
+            // Function to handle tab switching
+            function switchTab(e) {
+                e.preventDefault();
+                const targetTab = e.currentTarget.dataset.tab;
+
+                // Close mobile menu if open
+                mobileMenu.classList.add('hidden');
+
+                // Hide project detail page if it's open
+                hideProjectDetail();
+                
+                window.scrollTo(0, 0);
+
+                // Reset animations on all elements before switching tab
+                document.querySelectorAll('.scroll-animate').forEach(el => {
+                    el.classList.remove('visible');
+                });
+
+                // Update nav links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.tab === targetTab) {
+                        link.classList.add('active');
+                    }
+                });
+
+                // Switch tabs
+                tabContents.forEach(content => {
+                    if (content.id === targetTab) {
+                        content.classList.remove('hidden');
+                        
+                        // Trigger animations for the newly visible tab's content
+                        const elementsToAnimate = content.querySelectorAll('.scroll-animate');
+                        elementsToAnimate.forEach(el => {
+                            setTimeout(() => el.classList.add('visible'), 50); 
+                        });
+
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Function to show a specific project's detail page
+            function showProjectDetail(projectId) {
+                const project = projects.find(p => p.id === projectId);
+                if (!project) return;
+                
+                window.scrollTo(0, 0);
+
+                // Hide all main sections
+                tabContents.forEach(content => content.classList.add('hidden'));
+
+                // Conditionally add placeholder images
+                const placeholders = project.hasPlaceholders ? `
+                    <div class="my-12">
+                        <img src="https://source.unsplash.com/random/1200x675?technology,data,${project.id}" alt="Placeholder Image" class="w-full h-auto object-cover rounded-lg">
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-white mb-4">Approach</h4>
+                        <p class="max-w-3xl">${project.actions}</p>
+                    </div>
+                    <div class="my-12">
+                        <img src="https://source.unsplash.com/random/1200x675?interface,user,${project.id}" alt="Placeholder Image" class="w-full h-auto object-cover rounded-lg">
+                    </div>
+                ` : `
+                    <div>
+                        <h4 class="text-2xl font-bold text-white mb-4">Approach</h4>
+                        <p class="max-w-3xl">${project.actions}</p>
+                    </div>
+                `;
+
+                projectDetailSection.innerHTML = `
+                    <div class="max-w-4xl mx-auto">
+                        <button id="back-to-work" class="inline-flex items-center gap-x-2 mb-8 text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                            Back to Work
+                        </button>
+
+                        <div class="w-full h-[50vh] scroll-animate">
+                            <img src="${project.image}" alt="${project.title}" class="w-full h-full object-cover rounded-lg shadow-2xl shadow-[#69CBDF]/20">
+                        </div>
+
+                        <div class="py-12">
+                             <h1 class="text-4xl sm:text-5xl font-bold text-white tracking-tight scroll-animate" style="transition-delay: 100ms;">${project.title}</h1>
+                             <p class="mt-8 text-xl text-gray-300 max-w-3xl scroll-animate" style="transition-delay: 250ms;">${project.description}</p>
+                        </div>
+
+                        <div class="space-y-12 text-lg text-gray-300 scroll-animate" style="transition-delay: 400ms;">
+                             <div>
+                                <h4 class="text-2xl font-bold text-white mb-4">The Challenge</h4>
+                                <p class="max-w-3xl">${project.challenge}</p>
+                             </div>
+                              ${placeholders}
+                             <div>
+                                <h4 class="text-2xl font-bold text-white mb-4">Outcomes</h4>
+                                <p class="max-w-3xl">${project.outcomes}</p>
+                             </div>
+                             <div class="mt-8">
+                                <button id="confidentiality-link" class="inline-flex items-center gap-x-2 text-sm text-gray-500 hover:text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                    Brevity due to confidentiality, get in touch to learn more!
+                                </button>
+                            </div>
+                        </div>
+                        
+                         <!-- Gemini AI Feature -->
+                         <div class="border-t border-gray-800 pt-8 mt-12 scroll-animate" style="transition-delay: 550ms;">
+                            <button class="gemini-btn inline-flex items-center gap-x-2 text-lg font-semibold text-[#69CBDF] hover:text-white transition-colors" data-project-id="${project.id}">
+                                ✨ Generate New Research Questions
+                             </button>
+                             <div class="gemini-results-container mt-4" style="display: none;">
+                                 <div class="loader-container flex justify-center items-center py-4">
+                                     <div class="loader"></div>
+                                 </div>
+                                 <div class="gemini-content text-gray-300 space-y-3"></div>
+                             </div>
+                         </div>
+                    </div>
+                `;
+                
+                projectDetailSection.classList.remove('hidden');
+                document.getElementById('back-to-work').addEventListener('click', hideProjectDetail);
+                projectDetailSection.querySelector('.gemini-btn').addEventListener('click', generateResearchQuestions);
+                 projectDetailSection.querySelector('#confidentiality-link').addEventListener('click', () => {
+                     document.querySelector('.nav-link[data-tab="contact"]').click();
+                 });
+                
+                // Trigger animations for the new detail page
+                const elementsToAnimate = projectDetailSection.querySelectorAll('.scroll-animate');
+                elementsToAnimate.forEach(el => {
+                    setTimeout(() => el.classList.add('visible'), 50);
+                });
+            }
+
+            function hideProjectDetail() {
+                 projectDetailSection.classList.add('hidden');
+                 projectDetailSection.innerHTML = '';
+                 document.getElementById('work').classList.remove('hidden');
+            }
+            
+            // Function to populate the work grid with expandable projects
+            function populateWorkGrid() {
+                if (!workGrid) return;
+                workGrid.innerHTML = projects.map((project, index) => `
+                    <div class="project-card relative overflow-hidden group cursor-pointer transform hover:scale-105 transition-transform duration-300 scroll-animate" style="transition-delay: ${index * 100}ms" data-project-id="${project.id}">
+                        <img src="${project.image}" alt="${project.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 p-6">
+                            <h3 class="text-2xl font-bold text-white">${project.title}</h3>
+                            <p class="text-md text-gray-300">${project.description}</p>
+                        </div>
+                    </div>
+                `).join('');
+                addWorkCardListeners();
+            }
+
+            function addWorkCardListeners() {
+                workGrid.querySelectorAll('.project-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                         const projectId = parseInt(e.currentTarget.dataset.projectId);
+                         showProjectDetail(projectId);
+                    });
+                });
+            }
+
+            // --- Gemini API Function ---
+            async function generateResearchQuestions(e) {
+                const button = e.currentTarget;
+                const projectId = parseInt(button.dataset.projectId);
+                const project = projects.find(p => p.id === projectId);
+                const resultsContainer = button.nextElementSibling;
+                const loader = resultsContainer.querySelector('.loader-container');
+                const contentDiv = resultsContainer.querySelector('.gemini-content');
+
+                if (button.disabled) return;
+                button.disabled = true;
+                button.style.opacity = '0.5';
+
+                resultsContainer.style.display = 'block';
+                loader.style.display = 'flex';
+                contentDiv.innerHTML = '';
+                
+                const prompt = `You are a strategic product leader. Based on the following project challenge, generate 3-4 high-level, strategic research questions that a product manager, CEO, or CTO would ask to understand the business opportunity and market viability. These should not be user interview questions, but rather foundational questions about the project's strategy. Format the response as a simple list with each question on a new line, starting with a hyphen.
+
+                Project Title: ${project.title}
+                
+                Challenge: ${project.challenge}`;
+                
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Left empty as per instructions
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        let errorMessage = `API request failed with status ${response.status}: ${response.statusText}`;
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                           try {
+                                const errorBody = await response.json();
+                                if (errorBody && errorBody.error && errorBody.error.message) {
+                                    errorMessage = errorBody.error.message;
+                                }
+                            } catch (e) {
+                                console.error("Could not parse JSON error response:", e);
+                            }
+                        } 
+                        throw new Error(errorMessage);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    let text = 'Sorry, I couldn\'t generate suggestions at this time.';
+                    if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                        text = result.candidates[0].content.parts[0].text;
+                    }
+                    
+                    const formattedText = text.split('\n')
+                        .filter(line => line.trim().startsWith('-'))
+                        .map(line => `<p>${line.trim().substring(1).trim()}</p>`)
+                        .join('');
+                    
+                    contentDiv.innerHTML = formattedText;
+
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    contentDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                } finally {
+                    loader.style.display = 'none';
+                    button.disabled = false;
+                     button.style.opacity = '1';
+                }
+            }
+
+            // --- SCROLL ANIMATION OBSERVER ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1 
+            });
+
+            function initializeAnimations() {
+                const elementsToAnimate = document.querySelectorAll('.scroll-animate');
+                elementsToAnimate.forEach(el => observer.observe(el));
+            }
+
+
+            // --- EVENT LISTENERS ---
+            
+            navLinks.forEach(link => link.addEventListener('click', switchTab));
+            
+            if(viewWorkBtn) {
+                viewWorkBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector('.nav-link[data-tab="work"]')?.click();
+                });
+            }
+            if(getInTouchBtn) {
+                getInTouchBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector('.nav-link[data-tab="contact"]')?.click();
+                });
+            }
+            
+            // Header scroll effect
+            const header = document.getElementById('main-header');
+            if (header) {
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 50) {
+                        header.classList.add('scrolled');
+                    } else {
+                        header.classList.remove('scrolled');
+                    }
+                });
+            }
+
+            // --- INITIALIZATION ---
+            populateWorkGrid();
+            initializeAnimations();
+            
+            setTimeout(() => {
+                document.querySelectorAll('#hello .scroll-animate').forEach(el => el.classList.add('visible'));
+            }, 50);
+
+        });
+    </script>
+</body>
+</html>
