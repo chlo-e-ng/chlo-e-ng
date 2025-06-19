@@ -105,6 +105,10 @@
             -webkit-text-fill-color: transparent;
             -moz-text-fill-color: transparent;
         }
+
+        .card-gradient {
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%);
+        }
     </style>
 </head>
 <body class="antialiased flex flex-col min-h-screen">
@@ -501,6 +505,7 @@
             const mobileMenu = document.getElementById('mobile-menu');
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const closeMobileMenuButton = document.getElementById('close-mobile-menu-button');
+            
 
 
             // --- FUNCTIONS ---
@@ -508,6 +513,7 @@
             // Function to handle tab switching
             function switchTab(e) {
                 e.preventDefault();
+                mobileMenu.classList.add('hidden'); 
                 const targetTab = e.currentTarget.dataset.tab;
 
                 // Close mobile menu if open
@@ -788,6 +794,14 @@
                     document.querySelector('.nav-link[data-tab="contact"]')?.click();
                 });
             }
+
+            // Mobile Menu
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.remove('hidden');
+            });
+            closeMobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
             
             // Header scroll effect
             const header = document.getElementById('main-header');
